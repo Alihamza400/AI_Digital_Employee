@@ -30,17 +30,15 @@ A modular, file-based autonomous agent system that follows the **Perception → 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Clone & install
-uv sync
+# 1. Clone the repo
+git clone https://github.com/Alihamza400/AI_Digital_Employee.git
+cd AI_Digital_Employee
 
-# 2. Configure secrets
-cp .env.example .env
-# Fill in Gmail, Calendar, opencode credentials
+# 2. Run the interactive setup script
+bash setup.sh
 
 # 3. Fire it up
 uv run python -m src.scripts.main
-
-# 🎉 The AI employee is now running
 ```
 
 ---
@@ -161,6 +159,7 @@ docker exec -it hackathon0 opencode providers login
 ├── LICENSE               # MIT
 ├── AGENTS.md             # Developer onboarding
 │
+├── setup.sh              # Interactive onboarding script
 ├── Dockerfile            # Production container
 ├── docker-compose.yml    # One-command deploy
 ├── entrypoint.sh         # Container init script

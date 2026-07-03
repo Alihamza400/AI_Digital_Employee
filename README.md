@@ -1,6 +1,12 @@
-# 🤖 Personal AI Employee — Hackathon 0
+# AI Digital Employee
 
-> **Your autonomous digital employee.** Watches email, WhatsApp, LinkedIn. Reasons with AI. Gets your approval before acting.
+[![CI](https://github.com/Alihamza400/AI_Digital_Employee/actions/workflows/ci.yml/badge.svg)](https://github.com/Alihamza400/AI_Digital_Employee/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-312/)
+[![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker)](https://www.docker.com)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![OpenCode](https://img.shields.io/badge/powered%20by-opencode-7C3AED)](https://opencode.ai)
+
+> Autonomous digital employee — monitors email, WhatsApp, and LinkedIn, reasons with AI, and executes actions with human approval.
 
 ---
 
@@ -181,6 +187,10 @@ docker exec -it hackathon0 opencode providers login
 │       ├── scheduler.py
 │       └── playwright_manager.py
 │
+├── LICENSE
+├── .github/
+│   └── workflows/ci.yml       # CI pipeline (ruff, black)
+│
 ├── .opencode/
 │   └── agents/ai-employee.md  # AI reasoning subagent
 │
@@ -204,4 +214,4 @@ docker exec -it hackathon0 opencode providers login
 
 ## 📄 License
 
-MIT — built for [Hackathon 0](https://opencode.ai)
+MIT — see [LICENSE](LICENSE). Built for [Hackathon 0](https://opencode.ai).

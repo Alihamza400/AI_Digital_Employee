@@ -1,9 +1,22 @@
 [project]
-name = "hackathon0"
-version = "0.1.0"
-description = "Personal AI Employee - Hackathon 0"
+name = "ai-digital-employee"
+version = "1.0.0"
+description = "Autonomous AI employee — monitors email, WhatsApp, LinkedIn, reasons with LLMs, and executes actions with human approval"
 readme = "README.md"
 requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Ali Hamza", email = "raialihamza58@gmail.com"},
+]
+keywords = ["ai-agent", "automation", "gmail", "whatsapp", "linkedin", "opencode"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Office Suites",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "google-api-python-client>=2.198.0",
     "google-auth>=2.55.1",
@@ -22,6 +35,14 @@ dependencies = [
     "apscheduler>=3.10.0",
     "cryptography>=42.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Alihamza400/AI_Digital_Employee"
+Repository = "https://github.com/Alihamza400/AI_Digital_Employee"
+Documentation = "https://github.com/Alihamza400/AI_Digital_Employee"
+
+[project.scripts]
+ai-employee = "main:main"
 
 [dependency-groups]
 dev = [

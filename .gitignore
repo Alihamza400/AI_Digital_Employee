@@ -65,6 +65,9 @@ AI_Employee_Vault/whatsapp_session/
 AI_Employee_Vault/linkedin_session/
 AI_Employee_Vault/test_session/
 
+# === Generated reports ===
+reports/
+
 # === Project junk / test artifacts ===
 *.pdf
 *.txt

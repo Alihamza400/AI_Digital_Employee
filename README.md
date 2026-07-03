@@ -121,7 +121,7 @@ Executes approved actions via the Model Context Protocol:
 | **Messaging** | `SEND_WHATSAPP` | WhatsApp Web (Playwright) |
 | **Social** | `POST_LINKEDIN`, `CREATE_DRAFT_LINKEDIN` | LinkedIn (Playwright + Jinja2) |
 | **Productivity** | `SCHEDULE_MEETING` | Google Calendar API |
-| **Documents** | `CREATE_INVOICE` | PDF generation (fpdf2) |
+| **Documents** | `CREATE_INVOICE`, `GENERATE_REPORT` | PDF generation (fpdf2) |
 | **Operations** | `FILE_OPERATION`, `CREATE_TASK` | Local file system |
 | **Research** | `WEB_SEARCH` | DuckDuckGo (Playwright) |
 
@@ -296,7 +296,8 @@ docker exec -it hackathon0 opencode providers login
 │   │   ├── auth_calendar.py              # Calendar OAuth
 │   │   ├── setup_sessions.py             # Browser login
 │   │   ├── check_sessions.py             # Session health
-│   │   └── login_linkedin.py             # LinkedIn auth
+│   │   ├── login_linkedin.py             # LinkedIn auth
+│   │   └── generate_report.py            # Enterprise PDF report
 │   └── watchers/                         # Core system
 │       ├── base_watcher.py               # Abstract base
 │       ├── filesystem_watcher.py         # File drops
@@ -319,6 +320,7 @@ docker exec -it hackathon0 opencode providers login
 │   ├── Dashboard.md
 │   └── LinkedIn_Templates/
 │
+├── reports/                              # Generated PDF reports
 ├── .github/workflows/ci.yml              # CI pipeline
 ├── Dockerfile                            # Production image
 ├── docker-compose.yml                    # Orchestration

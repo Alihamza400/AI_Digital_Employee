@@ -31,7 +31,7 @@ def main():
         print()
         print("  A browser window will open.")
         print("  1. Log in to LinkedIn manually (or scan QR)")
-        print(f"  2. Wait until your feed appears")
+        print("  2. Wait until your feed appears")
         print("  3. This script will detect login and save the session")
         print()
 

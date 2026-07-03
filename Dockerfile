@@ -38,4 +38,4 @@ RUN chmod +x /app/entrypoint.sh
 EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["uv", "run", "python", "main.py"]
+CMD ["uv", "run", "python", "-m", "src.scripts.main"]

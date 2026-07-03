@@ -1,7 +1,6 @@
 """
 MCP Server - Model Context Protocol Server for AI Employee Actions
 """
-import time
 import uuid
 import json
 import logging
@@ -9,8 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, asdict, fields
-from threading import Thread, Lock
+from dataclasses import dataclass, fields
+from threading import Lock
 
 from .gmail_watcher import GmailSender
 from .whatsapp_watcher import WhatsAppSender

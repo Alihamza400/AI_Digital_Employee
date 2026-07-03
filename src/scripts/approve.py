@@ -87,14 +87,14 @@ if __name__ == "__main__":
     elif args[0] == "all":
         files = list_pending()
         if files:
-            print(f"\nCommands:")
-            print(f"  python3 approve.py approve <filename>")
-            print(f"  python3 approve.py reject <filename>")
+            print("\nCommands:")
+            print("  python -m src.scripts.approve approve <filename>")
+            print("  python -m src.scripts.approve reject <filename>")
 
     else:
         print("Usage:")
-        print("  python3 approve.py              List pending")
-        print("  python3 approve.py list         List pending")
-        print("  python3 approve.py show <file>   Show details")
-        print("  python3 approve.py approve <file> [file...]  Approve")
-        print("  python3 approve.py reject <file>  [file...]  Reject")
+        print("  python -m src.scripts.approve                List pending")
+        print("  python -m src.scripts.approve list           List pending")
+        print("  python -m src.scripts.approve show <file>    Show details")
+        print("  python -m src.scripts.approve approve <file> [file...]  Approve")
+        print("  python -m src.scripts.approve reject <file>  [file...]  Reject")

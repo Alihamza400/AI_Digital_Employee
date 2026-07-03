@@ -2,10 +2,9 @@
 WhatsApp Watcher - Monitors WhatsApp Web for new messages
 """
 import time
-import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
 
 from .base_watcher import BaseWatcher
@@ -58,7 +57,6 @@ Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 
     def _wait_for_session(self, timeout: int = 90) -> bool:
         """Poll for chat-list selector with increasing waits"""
-        import time
         for i in range(timeout):
             try:
                 if self.page.query_selector('[data-testid="chat-list"]'):
@@ -201,7 +199,6 @@ Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             logger.error(f"Failed to initialize WhatsApp Sender: {e}")
 
     def _wait_for_session(self, timeout: int = 90) -> bool:
-        import time
         for i in range(timeout):
             try:
                 if self.page.query_selector('[data-testid="chat-list"]'):

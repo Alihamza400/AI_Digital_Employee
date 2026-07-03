@@ -1,11 +1,9 @@
 """
 LinkedIn Watcher and Post Creator - Monitors LinkedIn and creates posts
 """
-import time
-import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
 from jinja2 import Template
 
@@ -169,7 +167,7 @@ status: pending
         
         filepath = self.needs_action / filename
         filepath.write_text(content)
-        logger.info(f"Created action file for LinkedIn notification")
+        logger.info("Created action file for LinkedIn notification")
         
         return filepath
     

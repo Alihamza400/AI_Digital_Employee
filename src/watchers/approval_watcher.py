@@ -4,14 +4,13 @@ Approval Watcher - Watches approval directories, notifies, and executes actions
 import time
 import json
 import logging
-import threading
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from .mcp_server import MCPServer, ActionRequest, ActionType, ActionStatus
+from .mcp_server import MCPServer, ActionRequest, ActionStatus
 from .gmail_watcher import GmailSender
 
 logger = logging.getLogger(__name__)
@@ -57,7 +56,7 @@ class PendingHandler(FileSystemEventHandler):
         logger.info(f"New approval request: {action_type} ({req_id})")
 
         if not self.gmail_sender or not self.notify_email:
-            logger.info(f"  → Check pending: python3 approve.py")
+            logger.info("  → Check pending: python3 approve.py")
             return
 
         approve_url = f"{self.base_url}/approve?id={filepath.name}"

@@ -1,12 +1,11 @@
 """
 Gmail Watcher - Monitors Gmail for new emails using Gmail API
 """
-import time
 import json
 import base64
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
 
 from .base_watcher import BaseWatcher

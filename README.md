@@ -38,7 +38,7 @@ cp .env.example .env
 # Fill in Gmail, Calendar, opencode credentials
 
 # 3. Fire it up
-uv run python main.py
+uv run python -m src.scripts.main
 
 # 🎉 The AI employee is now running
 ```
@@ -92,7 +92,7 @@ AI writes APPROVAL_<type>_<id>.json → Pending_Approval/
                                         ↓
                               You approve via:
                                 • HTTP :8080 (web UI)
-                                • approve.py list|approve|reject
+                                • uv run python -m src.scripts.approve list|approve|reject
                                         ↓
                               Approved/ → MCP Server → executes
 ```
@@ -154,15 +154,11 @@ docker exec -it hackathon0 opencode providers login
 ## 📁 Project Structure
 
 ```
-├── main.py               # System entry point (run this)
-├── approve.py            # Approval CLI (list/approve/reject)
-├── auth_gmail.py         # Gmail OAuth flow
-├── auth_calendar.py      # Calendar OAuth flow
-├── setup_sessions.py     # WhatsApp/LinkedIn browser setup
-├── pyproject.toml        # Dependencies
+├── pyproject.toml         # Dependencies
 ├── .env.example          # Secret template (copy → .env)
 ├── .gitignore
 ├── README.md
+├── LICENSE               # MIT
 ├── AGENTS.md             # Developer onboarding
 │
 ├── Dockerfile            # Production container
@@ -171,7 +167,12 @@ docker exec -it hackathon0 opencode providers login
 │
 ├── src/
 │   ├── config.py         # pydantic-settings
-│   ├── scripts/          # Utility scripts
+│   ├── scripts/          # Entry points & utilities
+│   │   ├── main.py             # System entry point
+│   │   ├── approve.py          # Approval CLI
+│   │   ├── auth_gmail.py       # Gmail OAuth flow
+│   │   ├── auth_calendar.py    # Calendar OAuth flow
+│   │   ├── setup_sessions.py   # WhatsApp/LinkedIn browser setup
 │   │   ├── check_sessions.py
 │   │   └── login_linkedin.py
 │   └── watchers/

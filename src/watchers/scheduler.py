@@ -2,13 +2,11 @@
 Cron Scheduler and Automated Tasks
 Handles scheduled tasks like daily briefings, subscription audits, etc.
 """
-import time
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Callable, Optional
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
-from croniter import croniter
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers import SchedulerNotRunningError
 from apscheduler.triggers.cron import CronTrigger

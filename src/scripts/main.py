@@ -1,11 +1,18 @@
 """
 Personal AI Employee - Your autonomous assistant
 """
-import sys, time, signal, logging, socket, subprocess, threading, re
+import sys
+import time
+import signal
+import logging
+import socket
+import subprocess
+import threading
+import re
 from pathlib import Path
 from threading import Thread
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.watchers import (
     FileSystemWatcher, GmailWatcher,
@@ -85,7 +92,7 @@ def print_status(s: Settings, tunnel_url: str | None = None):
     if tunnel_url:
         print(f"  🌐  Tunnel:   {tunnel_url}")
     print(f"  🌐  Approve:  {url}")
-    print(f"  ⏹   Stop:     Ctrl+C")
+    print("  ⏹   Stop:     Ctrl+C")
     print()
 
     if tunnel_url or 'localhost' not in url:

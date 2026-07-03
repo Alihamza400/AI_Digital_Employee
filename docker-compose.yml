@@ -16,9 +16,8 @@ services:
       - ./opencode-config:/root/.config/opencode
       - ./opencode-auth:/root/.local/share/opencode
     # Override CMD to run different modes:
-    # Default: main.py (full system)
-    # command: ["uv", "run", "python", "start_watcher.py"]
-    # command: ["uv", "run", "python", "approve.py", "list"]
+    # Default: src/scripts/main.py (full system)
+    # command: ["uv", "run", "python", "-m", "src.scripts.approve", "list"]
 
 volumes:
   vault_data:

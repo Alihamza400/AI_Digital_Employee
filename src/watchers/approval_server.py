@@ -79,12 +79,12 @@ class ApprovalRequestHandler(BaseHTTPRequestHandler):
                     data = json.loads(f.read_text())
                     aid = data.get("id", "?")[:12]
                     atype = data.get("action_type", "?")
-                    items += f'<div class="pending">'
+                    items += '<div class="pending">'
                     items += f'<strong>{atype}</strong> <span class="id">({aid})</span>'
-                    items += f'<div class="actions">'
+                    items += '<div class="actions">'
                     items += f'<a class="approve" href="/approve?id={f.name}">✅ Approve</a>'
                     items += f'<a class="reject" href="/reject?id={f.name}">❌ Reject</a>'
-                    items += f'</div></div>'
+                    items += '</div></div>'
                 except Exception:
                     items += f'<div class="pending">⚠ Could not read: {f.name}</div>'
         html = HTML_LIST.replace("{items}", items)

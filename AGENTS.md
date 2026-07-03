@@ -3,16 +3,14 @@
 ## Quick start
 
 ```bash
-uv run python main.py                  # full system
-uv run python start_watcher.py          # FileSystemWatcher only
-uv run python approve.py                # approval CLI (list/approve/reject)
+uv run python -m src.scripts.main        # full system
+uv run python -m src.scripts.approve     # approval CLI (list/approve/reject)
 ```
 
 ## Python & tooling
 
 - Python 3.12+, managed with **uv** (`uv.lock` + `pyproject.toml`)
 - Dev: `uv run ruff check src/`, `uv run black src/`, `uv run pytest`
-- Tests live in `main.py --test` (inline unittest) and standalone scripts (`test_gmail.py`, etc.)
 - No formal pytest test suite exists yet
 
 ## Architecture
@@ -58,7 +56,7 @@ Invoked via: `opencode run @ai-employee Process Needs_Action/FILE_xxx.md`
 
 ## Approval workflow
 
-- `approve.py` — CLI: `python approve.py list|show|approve|reject <file>`
+- `src/scripts/approve.py` — CLI: `uv run python -m src.scripts.approve list|show|approve|reject <file>`
 - HTTP server on `:8080` — `src/watchers/approval_server.py`
 - Both work by **renaming** JSON files between `Pending_Approval/`, `Approved/`, `Rejected/`
 
@@ -69,5 +67,5 @@ Invoked via: `opencode run @ai-employee Process Needs_Action/FILE_xxx.md`
 - `ai_reasoning_watcher.py:39` has a bare-word `HAMZA` bug that causes a SyntaxError on import
 - `AIReasoningWatcher` calls `opencode run` as a subprocess — requires `opencode` in PATH
 - Vault config stored in `AI_Employee_Vault/config.json` (email, approval URL, etc.)
-- Tunnel mode: `python main.py --tunnel` creates public URL via localhost.run
-- `start_watcher.py` uses `Path.cwd()` — run from repo root
+- Tunnel mode: `uv run python -m src.scripts.main --tunnel` creates public URL via localhost.run
+- Run all scripts from repo root so CWD-relative paths work

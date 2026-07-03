@@ -42,7 +42,7 @@ Repository = "https://github.com/Alihamza400/AI_Digital_Employee"
 Documentation = "https://github.com/Alihamza400/AI_Digital_Employee"
 
 [project.scripts]
-ai-employee = "main:main"
+ai-employee = "src.scripts.main:main"
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,100 @@
+# === Python ===
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+MANIFEST
+dist/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+
+# === Environment ===
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.Python
+.Python3
+
+# === IDE / Editor ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Jupyter ===
+.ipynb_checkpoints
+
+# === Temporary files ===
+tmp/
+tmp*
+*tmp
+scratch/
+
+# === Secrets & credentials ===
+.env
+secrets/
+*credentials*.json
+*google_calendar*.json
+*google_calender*.json
+
+# === Playwright browser sessions ===
+whatsapp_session/
+AI_Employee_Vault/whatsapp_session/
+AI_Employee_Vault/linkedin_session/
+AI_Employee_Vault/test_session/
+
+# === Project junk / test artifacts ===
+*.pdf
+*.txt
+
+# === Vault runtime data (auto-generated, not source) ===
+AI_Employee_Vault/_stale_backup/
+AI_Employee_Vault/Completed/
+AI_Employee_Vault/Drafts/
+AI_Employee_Vault/Logs/
+AI_Employee_Vault/Inbox/
+AI_Employee_Vault/Needs_Action/
+AI_Employee_Vault/Pending_Approval/
+AI_Employee_Vault/Approved/
+AI_Employee_Vault/Rejected/
+AI_Employee_Vault/Plans/
+AI_Employee_Vault/Accounting/
+AI_Employee_Vault/Obsidian/
+AI_Employee_Vault/.obsidian/
+AI_Employee_Vault/Done/
+AI_Employee_Vault/Briefings/
+AI_Employee_Vault/Audits/
+
+# === Runtime logs ===
+*.log
+
+# === Deprecated vault config ===
+AI_Employee_Vault/config.json
+
+# === Documentation (only keep AGENTS.md and README.md) ===
+LICENSE.md
+CHANGELOG*.md
+TODO*.md
+README.template.md

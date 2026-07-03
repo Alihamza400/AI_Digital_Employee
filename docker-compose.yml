@@ -1,0 +1,26 @@
+services:
+  ai-employee:
+    build: .
+    container_name: hackathon0
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - VAULT_PATH=/data
+    volumes:
+      - vault_data:/data
+      - whatsapp_sessions:/data/whatsapp_session
+      - linkedin_sessions:/data/linkedin_session
+      - ./opencode-config:/root/.config/opencode
+      - ./opencode-auth:/root/.local/share/opencode
+    # Override CMD to run different modes:
+    # Default: main.py (full system)
+    # command: ["uv", "run", "python", "start_watcher.py"]
+    # command: ["uv", "run", "python", "approve.py", "list"]
+
+volumes:
+  vault_data:
+  whatsapp_sessions:
+  linkedin_sessions:

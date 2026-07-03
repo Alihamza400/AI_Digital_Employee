@@ -148,23 +148,26 @@ docker exec -it hackathon0 opencode providers login
 ## 📁 Project Structure
 
 ```
-├── .env.example          # Secret template (copy to .env)
-├── .gitignore            # Comprehensive ignore rules
-├── .opencode/
-│   └── agents/
-│       └── ai-employee.md  # AI subagent definition
-├── AGENTS.md             # This file → developer onboarding
+├── main.py               # System entry point (run this)
+├── approve.py            # Approval CLI (list/approve/reject)
+├── auth_gmail.py         # Gmail OAuth flow
+├── auth_calendar.py      # Calendar OAuth flow
+├── setup_sessions.py     # WhatsApp/LinkedIn browser setup
+├── pyproject.toml        # Dependencies
+├── .env.example          # Secret template (copy → .env)
+├── .gitignore
+├── README.md
+├── AGENTS.md             # Developer onboarding
+│
 ├── Dockerfile            # Production container
 ├── docker-compose.yml    # One-command deploy
 ├── entrypoint.sh         # Container init script
-├── main.py               # System entry point
-├── start_watcher.py      # FileSystemWatcher only
-├── approve.py            # Approval CLI
-├── auth_gmail.py         # Gmail OAuth flow
-├── auth_calendar.py      # Calendar OAuth flow
-├── pyproject.toml        # Dependencies
+│
 ├── src/
-│   ├── config.py         # pydantic-settings (reads .env)
+│   ├── config.py         # pydantic-settings
+│   ├── scripts/          # Utility scripts
+│   │   ├── check_sessions.py
+│   │   └── login_linkedin.py
 │   └── watchers/
 │       ├── base_watcher.py
 │       ├── filesystem_watcher.py
@@ -174,14 +177,18 @@ docker exec -it hackathon0 opencode providers login
 │       ├── ai_reasoning_watcher.py
 │       ├── approval_watcher.py
 │       ├── approval_server.py
-│       ├── mcp_server.py
+│       ├── mcp_server.py      # Action executor (10 tools)
 │       ├── scheduler.py
 │       └── playwright_manager.py
+│
+├── .opencode/
+│   └── agents/ai-employee.md  # AI reasoning subagent
+│
 └── AI_Employee_Vault/    # Memory & data store
     ├── Company_Handbook.md
     ├── Business_Goals.md
     ├── Dashboard.md       # Auto-updated every 5 min
-    └── LinkedIn_Templates/# Jinja2 post templates
+    └── LinkedIn_Templates/
 ```
 
 ---

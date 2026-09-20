@@ -15,6 +15,7 @@ from threading import Thread
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
+from dotenv import load_dotenv
 from src.watchers import (
     FileSystemWatcher,
     GmailWatcher,
@@ -138,6 +139,14 @@ class PersonalAIEmployee:
         self.running = False
 
     def initialize(self):
+        # Export .env into the process environment before any watcher starts.
+        # pydantic-settings reads .env for its own typed fields but never puts it
+        # into os.environ, and the reasoning subprocess inherits only os.environ —
+        # so without this a provider key such as OPENROUTER_API_KEY sitting in
+        # .env would never reach `opencode`. Real environment variables win,
+        # because load_dotenv does not override by default.
+        load_dotenv()
+
         logger.info("Starting components...")
 
         self.filesystem_watcher = FileSystemWatcher(str(self.vault_path))

@@ -1,13 +1,13 @@
 # Dashboard - Personal AI Employee Real-Time Status
 
-*Last Updated: 2026-09-21 04:37*
+*Last Updated: 2026-09-21 04:53*
 
 ---
 
 ## System Status
 - **AI Employee**: ✅ ONLINE
 - **FileSystemWatcher**: ✅ RUNNING
-- **Scheduler**: ✅ RUNNING (7 jobs)
+- **Scheduler**: ✅ RUNNING
 - **Last Action**: N/A
 
 ---
@@ -16,8 +16,8 @@
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
 | Actions Today | 0 | 10+ | 🔄 |
-| Needs Action | 0 | < 5 | ✅ |
-| Pending Approvals | 0 | 0 | ✅ |
+| Needs Action | 1 | < 5 | ⚠️ |
+| Pending Approvals | 1 | 0 | ⚠️ |
 | Errors Today | 0 | 0 | ✅ |
 
 ---
@@ -26,12 +26,12 @@
 | Folder | Files | Status |
 |--------|-------|--------|
 | Inbox | 0 | 🟢 Empty |
-| Needs_Action | 0 | 🟢 Empty |
-| Plans | 0 | 🟢 Empty |
-| Pending_Approval | 0 | 🟢 Empty |
+| Needs_Action | 1 | 🟡 Waiting |
+| Plans | 2 | 🟡 Has plans |
+| Pending_Approval | 1 | 🔴 Needs review |
 | Approved | 0 | 🟢 Empty |
 | Rejected | 0 | 🟢 Empty |
-| Completed | 0 | 🟢 Empty |
+| Completed | 1 | 🟢 Has history |
 
 ---
 
@@ -43,10 +43,10 @@
 ---
 
 ## Alerts
-- ✅ No pending approvals
+- 🔴 1 approval(s) pending review
 - ✅ No errors detected
-- ✅ No queued actions
+- 🟡 1 action(s) waiting in Needs_Action/
 
 ---
 
-*Automatically updated by Scheduler — last refresh: 2026-09-21 04:37*
+*Automatically updated by Scheduler — last refresh: 2026-09-21 04:53*

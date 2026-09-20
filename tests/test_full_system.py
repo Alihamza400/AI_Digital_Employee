@@ -41,6 +41,10 @@ from pathlib import Path
 
 argv = sys.argv[1:]
 recorded = os.environ.get("STUB_OPENCODE_CALLS")
+probe_file = os.environ.get("STUB_ENV_PROBE_FILE")
+if probe_file:
+    with open(probe_file, "w") as pf:
+        pf.write(os.environ.get("STUB_ENV_PROBE") or "")
 if recorded:
     with open(recorded, "a") as fh:
         fh.write(json.dumps({"argv": argv, "cwd": os.getcwd()}) + "\\n")
@@ -133,11 +137,15 @@ def stub_opencode(tmp_path, monkeypatch):
     return calls_log
 
 
-def test_reasoning_subprocess_contract(tmp_path, stub_opencode):
+def test_reasoning_subprocess_contract(tmp_path, stub_opencode, monkeypatch):
     """
     The real subprocess invocation must run the configured agent/model, with a
-    working directory from which the prompt's relative path resolves.
+    working directory from which the prompt's relative path resolves, and must
+    inherit the process environment so provider keys reach opencode.
     """
+    probe_file = tmp_path / "env_probe.txt"
+    monkeypatch.setenv("STUB_ENV_PROBE", "inherited-from-parent")
+    monkeypatch.setenv("STUB_ENV_PROBE_FILE", str(probe_file))
     vault = tmp_path / "vault"
     MCPServer(str(vault), {})
     needs_action = vault / "Needs_Action"
@@ -152,6 +160,9 @@ def test_reasoning_subprocess_contract(tmp_path, stub_opencode):
     calls = [json.loads(line) for line in stub_opencode.read_text().splitlines() if line]
     assert len(calls) == 1
     argv, cwd = calls[0]["argv"], calls[0]["cwd"]
+
+    # Provider API keys arrive via the inherited environment, not the command line.
+    assert probe_file.read_text() == "inherited-from-parent"
 
     assert argv[0] == "run"
     assert "--agent" in argv and "ai-employee" in argv

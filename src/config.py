@@ -20,10 +20,16 @@ CALENDAR_SCOPES = [
 
 
 class Settings(BaseSettings):
+    # extra="ignore" is deliberate. A .env legitimately carries variables this
+    # class does not model — most importantly provider API keys such as
+    # OPENROUTER_API_KEY that the opencode subprocess reads from the process
+    # environment. With pydantic-settings' default (extra="forbid") the presence
+    # of any such key aborts startup with a ValidationError.
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         env_prefix="",
+        extra="ignore",
     )
 
     vault_path: str = "AI_Employee_Vault"

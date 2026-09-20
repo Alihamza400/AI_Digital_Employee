@@ -5,7 +5,9 @@ from src.config import Settings, GOOGLE_AUTH_URI, GOOGLE_TOKEN_URI, GMAIL_SCOPES
 
 
 def test_settings_default_values():
-    s = Settings()
+    # _env_file=None keeps this hermetic: a developer's own .env must not change
+    # what "default" means.
+    s = Settings(_env_file=None)
     assert s.vault_path == "AI_Employee_Vault"
     assert isinstance(s.vault, Path)
     assert s.approval_port == 8080
@@ -79,9 +81,29 @@ def test_to_dict_export():
     assert "calendar_token_json" in d
 
 
+def test_settings_tolerates_unmodelled_env_keys(tmp_path, monkeypatch):
+    """
+    A .env legitimately carries variables Settings does not model — provider API
+    keys in particular. With the default extra="forbid" their presence aborted
+    startup with a ValidationError before anything could run.
+    """
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("VAULT_PATH", raising=False)
+    (tmp_path / ".env").write_text(
+        "OPENROUTER_API_KEY=sk-or-v1-not-a-real-key\n"
+        "SOME_UNMODELLED_SETTING=1\n"
+        "VAULT_PATH=Custom_Vault\n"
+    )
+
+    s = Settings()
+
+    assert s.vault_path == "Custom_Vault"
+    assert s.opencode_model == ""
+
+
 def test_opencode_reasoning_settings():
     """The reasoning engine must be configurable — the default model may be unfunded."""
-    s = Settings()
+    s = Settings(_env_file=None)
     assert s.opencode_model == ""
     assert s.opencode_agent == "ai-employee"
     assert s.opencode_timeout == 300

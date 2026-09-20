@@ -120,13 +120,27 @@ class ApprovalHandler(FileSystemEventHandler):
         self.completed_dir = approved_dir.parent / "Completed"
         self.completed_dir.mkdir(parents=True, exist_ok=True)
 
+    # A file event can fire while the writer is still flushing, so a single read
+    # may see an empty or truncated body. Retrying briefly avoids silently
+    # dropping an approval the human already granted.
+    LOAD_ATTEMPTS = 6
+    LOAD_RETRY_DELAY = 0.1
+
     def _load_action(self, filepath: Path) -> Optional[dict]:
-        try:
-            with open(filepath) as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load action file {filepath}: {e}")
-            return None
+        for attempt in range(self.LOAD_ATTEMPTS):
+            try:
+                with open(filepath) as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                if attempt < self.LOAD_ATTEMPTS - 1:
+                    time.sleep(self.LOAD_RETRY_DELAY)
+                    continue
+                logger.error(f"Action file is not valid JSON: {filepath}")
+                return None
+            except OSError as e:
+                logger.error(f"Failed to read action file {filepath}: {e}")
+                return None
+        return None
 
     def on_created(self, event):
         if event.is_directory:

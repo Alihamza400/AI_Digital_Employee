@@ -15,15 +15,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --group dev
-      - run: uv run ruff check src/
-      - run: uv run black --check src/
+      - run: uv run ruff check src/ tests/
+      - run: uv run black --check src/ tests/
 
-  typecheck:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
-      - run: uv sync
-      - run: uv run pyright src/ || true
+      - run: uv sync --group dev
+      # Includes the full-system test, which boots the real watchers, the HTTP
+      # approval server and the executor. The reasoning subprocess is replaced
+      # by a stub `opencode` binary, so no model credentials are needed.
+      - run: uv run pytest -q

@@ -98,6 +98,24 @@ def wait_for(predicate, timeout: float = 20.0, interval: float = 0.1):
     return bool(predicate())
 
 
+def read_json_when_ready(path, timeout: float = 10.0):
+    """
+    Read JSON that another thread may still be flushing.
+
+    The reasoning subprocess and the MCP log writer create their files before the
+    body is fully written, so a naive read can catch a partial document.
+    """
+    deadline = time.time() + timeout
+    last_error = None
+    while time.time() < deadline:
+        try:
+            return json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError) as e:
+            last_error = e
+            time.sleep(0.05)
+    raise AssertionError(f"{path} never became valid JSON: {last_error}")
+
+
 @pytest.fixture
 def stub_opencode(tmp_path, monkeypatch):
     """Put a fake `opencode` on PATH and record how it was invoked."""
@@ -193,7 +211,9 @@ def test_full_lifecycle_inbox_to_completed(tmp_path, stub_opencode):
         # by the reasoning agent), so it is the stable proof that the drop landed.
         payload = vault / "Needs_Action" / "FILE_invoice_request.txt"
         assert wait_for(payload.exists), "FileSystemWatcher never filed the drop"
-        assert not request.exists(), "inbox file was not consumed"
+        # The watcher copies before unlinking so the original survives a failed
+        # copy, so consumption is eventual rather than instantaneous.
+        assert wait_for(lambda: not request.exists()), "inbox file was not consumed"
 
         action_file = vault / "Needs_Action" / "FILE_invoice_request.txt.md"
         assert wait_for(
@@ -207,7 +227,7 @@ def test_full_lifecycle_inbox_to_completed(tmp_path, stub_opencode):
             lambda: any(pending_dir.glob("APPROVAL_*.json"))
         ), "reasoning agent produced no approval request"
         approval_file = next(pending_dir.glob("APPROVAL_*.json"))
-        request_id = json.loads(approval_file.read_text())["id"]
+        request_id = read_json_when_ready(approval_file)["id"]
 
         assert (vault / "Plans" / f"PLAN_{request_id}.md").exists()
         assert wait_for(
@@ -233,7 +253,7 @@ def test_full_lifecycle_inbox_to_completed(tmp_path, stub_opencode):
         log_file = vault / "Logs" / f"{datetime.now().strftime('%Y-%m-%d')}.json"
         assert wait_for(log_file.exists), "no audit log written"
 
-        entries = json.loads(log_file.read_text())
+        entries = read_json_when_ready(log_file)
         executed = [e for e in entries if e["id"] == request_id]
         assert executed, "executed action missing from the audit log"
         assert executed[-1]["status"] == "completed"

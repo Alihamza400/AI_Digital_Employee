@@ -1,8 +1,11 @@
 """Regression tests for the audit trail, inbox intake, scheduler and dashboard."""
 
 import json
+import time
 from datetime import datetime
 from threading import Thread
+
+from src.watchers.approval_watcher import ApprovalHandler
 
 from src.watchers.filesystem_watcher import DropFolderHandler
 from src.watchers.mcp_server import (
@@ -91,6 +94,47 @@ def test_rejection_reason_is_persisted_before_archiving(tmp_path):
     assert data["status"] == "rejected"
     assert data["rejection_reason"] == "Not on brand"
     assert data["rejected_at"]
+
+
+def test_approval_handler_tolerates_a_file_still_being_written(tmp_path):
+    """
+    A filesystem event can fire while the approval file is still being flushed.
+    Failing to re-read would silently drop an approval the human already granted.
+    """
+    mcp = MCPServer(str(tmp_path), {})
+    approved = tmp_path / "Approved"
+    rejected = tmp_path / "Rejected"
+    approved.mkdir(parents=True, exist_ok=True)
+    rejected.mkdir(parents=True, exist_ok=True)
+    handler = ApprovalHandler(approved, rejected, mcp)
+
+    target = tmp_path / "written_later.txt"
+    path = approved / "APPROVAL_file_operation_slow-1.json"
+    path.write_text("")  # exists, but the body has not landed yet
+
+    payload = {
+        "id": "slow-1",
+        "action_type": "file_operation",
+        "parameters": {
+            "operation": "create_file",
+            "path": str(target),
+            "content": "landed after a delay",
+        },
+        "status": "approved",
+        "created_at": "2026-01-01T00:00:00",
+    }
+
+    def finish_writing():
+        time.sleep(0.3)
+        path.write_text(json.dumps(payload))
+
+    writer = Thread(target=finish_writing)
+    writer.start()
+    handler._handle_file(path)
+    writer.join()
+
+    assert target.read_text() == "landed after a delay"
+    assert (tmp_path / "Completed" / "executed" / path.name).exists()
 
 
 def test_dropping_the_same_filename_twice_keeps_both_action_files(tmp_path):

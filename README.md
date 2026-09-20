@@ -76,14 +76,17 @@ Six watchers continuously monitor for incoming signals:
 
 | Watcher | Channel | Technology | Trigger |
 |---|---|---|---|
-| `GmailWatcher` | Email | Gmail API (OAuth 2.0) | Polls unread important mail |
+| `GmailWatcher` | Email | Gmail API (OAuth 2.0) | Polls unread mail |
 | `WhatsAppWatcher` | Messaging | Playwright browser automation | Polls WhatsApp Web |
 | `LinkedInWatcher` | Professional | Playwright + Jinja2 templates | Polls notifications |
 | `FileSystemWatcher` | Files | watchdog (inotify) | File system events |
 | `AIReasoningWatcher` | Internal | Subprocess `opencode run` | New action files |
 | `ApprovalWatcher` | Approval | File rename watcher | Approved/Rejected signals |
 
-All extend `BaseWatcher` — a common abstract base class with `check_for_updates()` and `create_action_file()`.
+The four pollers (`FileSystemWatcher`, `GmailWatcher`, `WhatsAppWatcher`, `LinkedInWatcher`)
+extend `BaseWatcher` — a common abstract base class with `check_for_updates()` and
+`create_action_file()`. `AIReasoningWatcher` and `ApprovalWatcher` are standalone
+long-running event loops rather than pollers.
 
 ### Layer 2: Reasoning — AI Brain
 
@@ -121,7 +124,7 @@ Executes approved actions via the Model Context Protocol:
 | **Messaging** | `SEND_WHATSAPP` | WhatsApp Web (Playwright) |
 | **Social** | `POST_LINKEDIN`, `CREATE_DRAFT_LINKEDIN` | LinkedIn (Playwright + Jinja2) |
 | **Productivity** | `SCHEDULE_MEETING` | Google Calendar API |
-| **Documents** | `CREATE_INVOICE`, `GENERATE_REPORT` | PDF generation (fpdf2) |
+| **Documents** | `CREATE_INVOICE` | PDF generation (fpdf2) |
 | **Operations** | `FILE_OPERATION`, `CREATE_TASK` | Local file system |
 | **Research** | `WEB_SEARCH` | DuckDuckGo (Playwright) |
 
@@ -220,14 +223,13 @@ AI_Employee_Vault/
 | **Package Manager** | uv | Fast dependency management |
 | **Google APIs** | Gmail API, Calendar API | Email & scheduling |
 | **Browser Automation** | Playwright | WhatsApp, LinkedIn, Web Search |
-| **Web Framework** | FastAPI | Approval web UI |
+| **Approval UI** | Python `http.server` (stdlib) | Token-authenticated approve/reject |
 | **Templating** | Jinja2 | LinkedIn post templates |
 | **PDF Generation** | fpdf2 | Invoice creation |
-| **Scheduling** | APScheduler + Croniter | Automated tasks |
+| **Scheduling** | APScheduler | Cron & interval jobs |
 | **Configuration** | pydantic-settings | Type-safe .env config |
 | **Containers** | Docker + Compose | Production deployment |
-| **Linting** | Ruff, Black | Code quality |
-| **Security** | cryptography | Data protection |
+| **Quality** | Ruff, Black, pytest | Lint, format, 67 tests |
 
 ---
 
@@ -259,10 +261,19 @@ flowchart LR
 ### Manual start
 
 ```bash
+cp .env.example .env                        # then fill in the required values
 uv run python -m src.scripts.main           # Full system
 uv run python -m src.scripts.main --tunnel  # With public URL
+uv run ai-employee                          # Same entry point, as a console script
 uv run python -m src.scripts.approve list   # View pending approvals
 ```
+
+Run everything from the repo root — all paths are CWD-relative. The minimum `.env` needed:
+
+| Variable | Why it matters |
+|---|---|
+| `OPENCODE_MODEL` | Reasoning model, e.g. `google/gemini-3.6-flash`. List options with `opencode models`. If empty, opencode falls back to its default model, which may be unfunded and stall until `OPENCODE_TIMEOUT` without producing a plan |
+| `APPROVAL_SECRET` | `openssl rand -hex 24`. Without it the approval server runs with **no authentication** and warns at startup |
 
 ### Docker deployment
 
@@ -320,14 +331,25 @@ docker exec -it hackathon0 opencode providers login
 │   ├── Dashboard.md
 │   └── LinkedIn_Templates/
 │
+├── tests/                                 # 67 pytest tests
+│   ├── test_full_system.py               # End-to-end: Inbox → Completed
+│   ├── test_audit_integrity.py           # Log, approval & scheduler integrity
+│   ├── test_security_hardening.py        # Token auth & path confinement
+│   ├── test_agent_contract.py            # Subagent doc ↔ executor contract
+│   └── ...                               # Unit & integration suites
+│
 ├── reports/                              # Generated PDF reports
-├── .github/workflows/ci.yml              # CI pipeline
+├── .github/workflows/ci.yml              # CI pipeline (lint, format, test)
 ├── Dockerfile                            # Production image
 ├── docker-compose.yml                    # Orchestration
 ├── entrypoint.sh                         # Container init
 ├── setup.sh                              # Onboarding script
 ├── pyproject.toml                        # Dependencies
+├── uv.lock                               # Locked dependency graph
+├── .python-version                       # Python 3.12 pin
 ├── .env.example                          # Secret template
+├── AGENTS.md                             # Contributor & agent guide
+├── LICENSE                               # MIT
 └── README.md
 ```
 
@@ -344,6 +366,30 @@ docker exec -it hackathon0 opencode providers login
 | **Isolated credentials** | opencode API keys stored in `~/.config/opencode/` outside project tree |
 | **Browser isolation** | WhatsApp/LinkedIn sessions gitignored, stored in vault |
 | **Container safety** | Secrets injected at runtime, never baked into Docker image |
+| **Authenticated approvals** | `APPROVAL_SECRET` is required on every approve/reject endpoint, and emailed links carry it automatically |
+| **Vault-confined file ops** | `FILE_OPERATION` rejects any path resolving outside the vault, so an approved action cannot touch the host |
+| **Serialized audit log** | Concurrent writers are locked so no entry can be dropped from `Logs/` |
+
+---
+
+## Testing
+
+```bash
+uv run pytest                        # 67 tests
+uv run ruff check src/ tests/        # lint
+uv run black --check src/ tests/     # format
+```
+
+| Suite | Covers |
+|---|---|
+| `test_full_system.py` | Boots the real watchers, threads and HTTP approval server, then drives a file `Inbox/` → `Needs_Action/` → reasoning → `Pending_Approval/` → approve → `Completed/executed/`, plus the rejection path. Uses a stub `opencode` binary on `PATH` |
+| `test_audit_integrity.py` | Log-write serialization, persisted approval decisions, inbox collision handling, mid-write file tolerance, scheduler telemetry, dashboard metrics |
+| `test_security_hardening.py` | Token auth on every endpoint, usable notification links, per-server isolation, vault path confinement |
+| `test_approval_system.py` | HTTP server flow, CLI operations, execution and archival |
+| `test_mcp_server.py` | Action types, executor behaviour, handler failure propagation |
+| `test_scheduler.py` | Cron/interval jobs, briefings, file cleanup |
+| `test_agent_contract.py` | Subagent definition matches the executor (`mode: primary`, every documented action type has a handler) |
+| `test_config.py` · `test_vault.py` · `test_filesystem_watcher.py` · `test_ai_reasoning_watcher.py` · `test_end_to_end.py` | Config reconstruction, vault layout, file intake, reasoning subprocess contract |
 
 ---
 
@@ -354,17 +400,17 @@ gantt
     title Development Roadmap
     dateFormat  YYYY-MM
     section Foundation
-    File-based vault & watchers        :done, 2024-01, 2024-03
+    File-based vault & watchers        :done, 2026-01, 2026-03
     section Core
-    Email, WhatsApp, LinkedIn          :done, 2024-03, 2024-06
-    AI reasoning & approval workflow   :done, 2024-06, 2024-09
+    Email, WhatsApp, LinkedIn          :done, 2026-03, 2026-06
+    AI reasoning & approval workflow   :done, 2026-06, 2026-09
     section Enterprise
-    Docker deployment & CI/CD          :done, 2024-09, 2024-12
+    Docker, CI/CD & security hardening :done, 2026-07, 2026-09
     section Future
-    Multi-tenant support               :2025-01, 2025-06
-    SMS & payment integrations         :2025-01, 2025-06
-    Web dashboard & analytics          :2025-03, 2025-09
-    Team collaboration features        :2025-06, 2025-12
+    Multi-tenant support               :2026-10, 2027-03
+    SMS & payment integrations         :2026-10, 2027-03
+    Web dashboard & analytics          :2026-12, 2027-06
+    Team collaboration features        :2027-03, 2027-09
 ```
 
 | Phase | Status | Features |
@@ -372,7 +418,7 @@ gantt
 | **Foundation** | ✅ Complete | Obsidian vault, file watcher, base architecture |
 | **Core** | ✅ Complete | Gmail, WhatsApp, LinkedIn, Calendar, web search |
 | **Enterprise** | ✅ Complete | Docker, CI/CD, security hardening, approval system |
-| **Gold** | 🚧 In progress | Multi-tenant, web UI, SMS, payments |
+| **Gold** | 🚧 In progress | Multi-tenant, analytics dashboard, SMS, payments |
 | **Cloud** | 🚀 Planned | Team collaboration, analytics, API gateway |
 
 ---
@@ -385,5 +431,5 @@ gantt
 </p>
 
 <p align="center">
-  <a href="LICENSE">MIT License</a> — Copyright &copy; 2024 Ali Hamza
+  <a href="LICENSE">MIT License</a> — Copyright &copy; 2026 Ali Hamza
 </p>

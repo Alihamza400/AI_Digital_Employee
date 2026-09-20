@@ -1,6 +1,7 @@
 import time
 import logging
 import shutil
+import threading
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -13,15 +14,53 @@ class DropFolderHandler(FileSystemEventHandler):
         self.needs_action = Path(vault_path) / "Needs_Action"
         self.inbox = Path(vault_path) / "Inbox"
         self.logger = logging.getLogger("DropFolderHandler")
+        # The startup scan and the inotify callback can race on the same drop;
+        # without a claim, one file would be filed twice.
+        self._in_flight = set()
+        self._lock = threading.Lock()
+
+    def _unique_destination(self, name: str) -> Path:
+        """
+        Pick a destination that does not clobber an existing action file.
+
+        Dropping two files with the same name must not silently overwrite the
+        earlier one — the vault is the audit trail, so both drops are preserved.
+        """
+        dest = self.needs_action / name
+        if not dest.exists():
+            return dest
+        stem, suffix = dest.stem, dest.suffix
+        counter = 1
+        while True:
+            candidate = self.needs_action / f"{stem}_{counter}{suffix}"
+            if not candidate.exists():
+                return candidate
+            counter += 1
 
     def process_file(self, source: Path):
-        if not source.is_file() or source.name.startswith('.'):
+        if source.name.startswith("."):
             return
-        dest = self.needs_action / f"FILE_{source.name}"
-        shutil.copy2(source, dest)
-        self._create_metadata(source, dest)
-        source.unlink()
-        self.logger.info(f"Processed: {source.name}")
+
+        key = str(source)
+        with self._lock:
+            if key in self._in_flight:
+                return
+            self._in_flight.add(key)
+
+        try:
+            if not source.is_file():
+                return
+            self.needs_action.mkdir(parents=True, exist_ok=True)
+            dest = self._unique_destination(f"FILE_{source.name}")
+            shutil.copy2(source, dest)
+            self._create_metadata(source, dest)
+            source.unlink(missing_ok=True)
+            self.logger.info(f"Processed: {source.name} -> {dest.name}")
+        except OSError as e:
+            self.logger.warning(f"Could not process {source.name}: {e}")
+        finally:
+            with self._lock:
+                self._in_flight.discard(key)
 
     def process_existing(self):
         for f in sorted(self.inbox.iterdir()):
@@ -60,6 +99,7 @@ class FileSystemWatcher(BaseWatcher):
         self.inbox_path = self.vault_path / "Inbox"
         self.observer = Observer()
         self.handler = DropFolderHandler(vault_path)
+        self.running = False
 
     def check_for_updates(self) -> list:
         return []
@@ -71,14 +111,24 @@ class FileSystemWatcher(BaseWatcher):
         self.inbox_path.mkdir(parents=True, exist_ok=True)
         self.needs_action.mkdir(parents=True, exist_ok=True)
 
-        self.handler.process_existing()
-
+        # Start watching *before* the catch-up scan. Scanning first leaves a gap
+        # in which a file dropped between the scan and observer.start() would be
+        # seen by neither, and would sit in Inbox/ forever.
+        self.running = True
         self.observer.schedule(self.handler, str(self.inbox_path), recursive=False)
         self.observer.start()
         self.logger.info(f"Watching inbox: {self.inbox_path}")
+
+        self.handler.process_existing()
+
         try:
-            while True:
-                time.sleep(1)
+            while self.running:
+                time.sleep(0.5)
         except KeyboardInterrupt:
+            pass
+        finally:
             self.observer.stop()
-        self.observer.join()
+            self.observer.join()
+
+    def stop(self):
+        self.running = False

@@ -3,12 +3,14 @@ Session Health Check - Verifies LinkedIn and WhatsApp sessions are valid
 without opening headed browser windows.
 
 Usage:
-    python3 scripts/check_sessions.py
+    uv run python -m src.scripts.check_sessions
 """
+
 import sys
 import logging
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.watchers.playwright_manager import manager as pw_manager
 
@@ -17,6 +19,7 @@ logger = logging.getLogger("session_check")
 
 VAULT = Path("AI_Employee_Vault")
 
+
 def check_session(name: str, session_path: Path, url: str, selector: str) -> str:
     if not session_path.is_dir() or not any(session_path.iterdir()):
         return "❌ No session directory"
@@ -24,8 +27,10 @@ def check_session(name: str, session_path: Path, url: str, selector: str) -> str
         pw_manager.start()
         pw = pw_manager._playwright
         browser = pw.chromium.launch_persistent_context(
-            str(session_path), headless=True, channel="chromium",
-            viewport={'width': 1280, 'height': 720}
+            str(session_path),
+            headless=True,
+            channel="chromium",
+            viewport={"width": 1280, "height": 720},
         )
         page = browser.pages[0]
         page.goto(url)
@@ -41,6 +46,7 @@ def check_session(name: str, session_path: Path, url: str, selector: str) -> str
     finally:
         pw_manager.stop()
 
+
 def main():
     print()
     print("╔══════════════════════════════════════════════════════════╗")
@@ -48,12 +54,18 @@ def main():
     print("╚══════════════════════════════════════════════════════════╝")
     print()
 
-    print(f"  LinkedIn  {check_session('LinkedIn', VAULT/'linkedin_session', 'https://www.linkedin.com', '[data-test-id=\"nav-home\"]')}")
-    print(f"  WhatsApp  {check_session('WhatsApp', VAULT/'whatsapp_session', 'https://web.whatsapp.com', '[data-testid=\"chat-list\"]')}")
+    print(
+        f"  LinkedIn  {check_session('LinkedIn', VAULT/'linkedin_session', 'https://www.linkedin.com', '[data-test-id=\"nav-home\"]')}"
+    )
+    print(
+        f"  WhatsApp  {check_session('WhatsApp', VAULT/'whatsapp_session', 'https://web.whatsapp.com', '[data-testid=\"chat-list\"]')}"
+    )
     print()
     print("  To refresh a session:")
-    print("    python3 scripts/login_linkedin.py")
+    print("    uv run python -m src.scripts.login_linkedin")
+    print("    uv run python -m src.scripts.setup_sessions")
     print()
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,6 @@
 """Generate an enterprise-grade PDF report for the AI Digital Employee project."""
 
 import sys
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -27,17 +26,19 @@ GREEN = (34, 197, 94)
 AMBER = (245, 158, 11)
 
 
-ASCII_MAP = str.maketrans({
-    "\u2014": "---",
-    "\u2013": "--",
-    "\u2018": "'",
-    "\u2019": "'",
-    "\u201c": '"',
-    "\u201d": '"',
-    "\u2022": "*",
-    "\u2026": "...",
-    "\u00a0": " ",
-})
+ASCII_MAP = str.maketrans(
+    {
+        "\u2014": "---",
+        "\u2013": "--",
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2022": "*",
+        "\u2026": "...",
+        "\u00a0": " ",
+    }
+)
 
 
 def _a(text: str) -> str:
@@ -85,7 +86,9 @@ class EnterpriseReport(FPDF):
         self.ln(4)
         self.set_font("Helvetica", "", 14)
         self.set_text_color(196, 181, 253)
-        self.cell(0, 10, "Enterprise Autonomous Agent System", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0, 10, "Enterprise Autonomous Agent System", align="C", new_x="LMARGIN", new_y="NEXT"
+        )
         self.ln(12)
         self.set_draw_color(*ACCENT)
         self.set_line_width(0.5)
@@ -94,8 +97,22 @@ class EnterpriseReport(FPDF):
         self.set_font("Helvetica", "", 11)
         self.set_text_color(*WHITE)
         self.cell(0, 7, "Prepared by: Ali Hamza", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 7, f"Date: {datetime.now().strftime('%B %d, %Y')}", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 7, "Classification: Internal  |  Version 1.0", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0,
+            7,
+            f"Date: {datetime.now().strftime('%B %d, %Y')}",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+        self.cell(
+            0,
+            7,
+            "Classification: Internal  |  Version 1.0",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
         self.ln(30)
         self.set_y(140)
         self.set_draw_color(*ACCENT)
@@ -105,8 +122,22 @@ class EnterpriseReport(FPDF):
         self.set_font("Helvetica", "I", 9)
         self.set_text_color(*MEDIUM_GRAY)
         self.cell(0, 6, "CONFIDENTIAL", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 6, "This document contains proprietary system architecture", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 6, "and may not be distributed without authorization.", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(
+            0,
+            6,
+            "This document contains proprietary system architecture",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
+        self.cell(
+            0,
+            6,
+            "and may not be distributed without authorization.",
+            align="C",
+            new_x="LMARGIN",
+            new_y="NEXT",
+        )
         self._in_cover = False
 
     def toc_page(self):
@@ -189,7 +220,14 @@ class EnterpriseReport(FPDF):
             else:
                 self.set_fill_color(*WHITE)
             for i, cell_text in enumerate(row):
-                self.cell(col_widths[i], 6, _a(f" {cell_text}"), border=True, fill=True, align="C" if i > 0 else "L")
+                self.cell(
+                    col_widths[i],
+                    6,
+                    _a(f" {cell_text}"),
+                    border=True,
+                    fill=True,
+                    align="C" if i > 0 else "L",
+                )
             self.ln()
         self.ln(2)
 
@@ -305,27 +343,39 @@ def generate_report():
         "major capability domains, each designed to handle real-world business workflows."
     )
     capabilities = [
-        ("Email Automation",
-         "Monitors Gmail for important communications using the Gmail API with OAuth 2.0. "
-         "AI crafts context-aware replies using company guidelines. Every outbound message "
-         "requires human approval, preventing unauthorized communications."),
-        ("WhatsApp Integration",
-         "Leverages Playwright browser automation to interact with WhatsApp Web. "
-         "Persistent sessions eliminate repeated QR scans. AI-generated responses maintain "
-         "brand voice and require approval before delivery."),
-        ("LinkedIn Management",
-         "Monitors LinkedIn notifications and supports post creation via Jinja2 templates. "
-         "Five pre-built template types: business updates, case studies, thought leadership, "
-         "promotional content, and engagement posts."),
-        ("Calendar Scheduling",
-         "Integrates with Google Calendar API for automated meeting creation. Supports "
-         "attendee management, timezone handling, and smart scheduling."),
-        ("Document Generation",
-         "Generates professional PDF invoices using fpdf2. Supports file operations for "
-         "document management and structured task creation for workflow tracking."),
-        ("Web Research",
-         "Automated web search capability for competitive analysis, market research, and "
-         "data gathering. Results are structured and citable for downstream use."),
+        (
+            "Email Automation",
+            "Monitors Gmail for important communications using the Gmail API with OAuth 2.0. "
+            "AI crafts context-aware replies using company guidelines. Every outbound message "
+            "requires human approval, preventing unauthorized communications.",
+        ),
+        (
+            "WhatsApp Integration",
+            "Leverages Playwright browser automation to interact with WhatsApp Web. "
+            "Persistent sessions eliminate repeated QR scans. AI-generated responses maintain "
+            "brand voice and require approval before delivery.",
+        ),
+        (
+            "LinkedIn Management",
+            "Monitors LinkedIn notifications and supports post creation via Jinja2 templates. "
+            "Five pre-built template types: business updates, case studies, thought leadership, "
+            "promotional content, and engagement posts.",
+        ),
+        (
+            "Calendar Scheduling",
+            "Integrates with Google Calendar API for automated meeting creation. Supports "
+            "attendee management, timezone handling, and smart scheduling.",
+        ),
+        (
+            "Document Generation",
+            "Generates professional PDF invoices using fpdf2. Supports file operations for "
+            "document management and structured task creation for workflow tracking.",
+        ),
+        (
+            "Web Research",
+            "Automated web search capability for competitive analysis, market research, and "
+            "data gathering. Results are structured and citable for downstream use.",
+        ),
     ]
     for i, (title, desc) in enumerate(capabilities):
         pdf.colored_box(title, desc, PRIMARY if i % 2 == 0 else ACCENT)
@@ -452,12 +502,33 @@ def generate_report():
     pdf.ln(6)
     pdf.set_font("Helvetica", "I", 10)
     pdf.set_text_color(*MEDIUM_GRAY)
-    pdf.cell(0, 7, _a('"The future of work is human-AI collaboration, not replacement."'), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(
+        0,
+        7,
+        _a('"The future of work is human-AI collaboration, not replacement."'),
+        align="C",
+        new_x="LMARGIN",
+        new_y="NEXT",
+    )
     pdf.ln(14)
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*DARK)
-    pdf.cell(0, 6, _a("Contact: Ali Hamza  |  Email: raialihamza58@gmail.com"), align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 6, _a("Repository: github.com/Alihamza400/AI_Digital_Employee"), align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(
+        0,
+        6,
+        _a("Contact: Ali Hamza  |  Email: raialihamza58@gmail.com"),
+        align="C",
+        new_x="LMARGIN",
+        new_y="NEXT",
+    )
+    pdf.cell(
+        0,
+        6,
+        _a("Repository: github.com/Alihamza400/AI_Digital_Employee"),
+        align="C",
+        new_x="LMARGIN",
+        new_y="NEXT",
+    )
 
     # ── Save ────────────────────────────────────────────────────────────
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

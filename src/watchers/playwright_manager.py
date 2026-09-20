@@ -1,6 +1,7 @@
 """
 Shared Playwright Manager - single Playwright instance for all watchers
 """
+
 import threading
 import logging
 
@@ -8,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from playwright.sync_api import sync_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -54,7 +56,17 @@ class PlaywrightManager:
             return pw.chromium.launch_persistent_context(
                 str(session_path), headless=headless, **kwargs
             )
-        return pw.chromium.launch(headless=headless, **kwargs)
+        browser = pw.chromium.launch(headless=headless, **kwargs)
+        context = browser.new_context()
+        context.new_page()
+        orig_close = context.close
+
+        def close_wrapper():
+            orig_close()
+            browser.close()
+
+        context.close = close_wrapper
+        return context
 
 
 manager = PlaywrightManager()

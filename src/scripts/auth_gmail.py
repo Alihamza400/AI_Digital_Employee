@@ -1,11 +1,16 @@
 """Re-authenticate Gmail — prints new token values to paste into .env"""
+
 import sys
-sys.path.insert(0, '.')
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from src.config import settings
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
-          'https://www.googleapis.com/auth/gmail.send']
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+]
 
 if not settings.gmail_client_config_dict:
     print("❌ GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET not set in .env")
@@ -20,6 +25,6 @@ flow.fetch_token(authorization_response=auth_url)
 creds = flow.credentials
 
 print("\n✅ New token generated. Add these to your .env file:\n")
-print(f'GMAIL_REFRESH_TOKEN={creds.refresh_token}')
-print('# (Keep GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET the same)')
+print(f"GMAIL_REFRESH_TOKEN={creds.refresh_token}")
+print("# (Keep GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET the same)")
 print()

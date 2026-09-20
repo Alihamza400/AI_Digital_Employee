@@ -1,6 +1,7 @@
 """
 Approval Watcher - Watches approval directories, notifies, and executes actions
 """
+
 import time
 import json
 import logging
@@ -19,19 +20,26 @@ logger = logging.getLogger(__name__)
 class PendingHandler(FileSystemEventHandler):
     """Watches Pending_Approval/ and sends email notification with clickable links"""
 
-    def __init__(self, pending_dir: Path, gmail_sender: Optional[GmailSender] = None,
-                 notify_email: Optional[str] = None, base_url: str = "http://localhost:8080"):
+    def __init__(
+        self,
+        pending_dir: Path,
+        gmail_sender: Optional[GmailSender] = None,
+        notify_email: Optional[str] = None,
+        base_url: str = "http://localhost:8080",
+        secret: str = "",
+    ):
         self.pending_dir = pending_dir
         self.gmail_sender = gmail_sender
         self.notify_email = notify_email
         self.base_url = base_url
+        self.secret = secret
         self.seen = set()
 
     def on_created(self, event):
         if event.is_directory:
             return
         filepath = Path(event.src_path)
-        if filepath.suffix == '.json' and filepath.name not in self.seen:
+        if filepath.suffix == ".json" and filepath.name not in self.seen:
             self.seen.add(filepath.name)
             self._notify(filepath)
 
@@ -39,7 +47,7 @@ class PendingHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         filepath = Path(event.dest_path)
-        if filepath.suffix == '.json' and filepath.name not in self.seen:
+        if filepath.suffix == ".json" and filepath.name not in self.seen:
             self.seen.add(filepath.name)
             self._notify(filepath)
 
@@ -49,9 +57,11 @@ class PendingHandler(FileSystemEventHandler):
         except Exception:
             data = {}
 
-        action_type = data.get('action_type', '?')
-        req_id = data.get('id', '?')[:8]
-        summary = str(list(data.get('parameters', {}).values())[0] if data.get('parameters') else '')[:60]
+        action_type = data.get("action_type", "?")
+        req_id = data.get("id", "?")[:8]
+        summary = str(
+            list(data.get("parameters", {}).values())[0] if data.get("parameters") else ""
+        )[:60]
 
         logger.info(f"New approval request: {action_type} ({req_id})")
 
@@ -59,9 +69,12 @@ class PendingHandler(FileSystemEventHandler):
             logger.info("  → Check pending: python3 approve.py")
             return
 
-        approve_url = f"{self.base_url}/approve?id={filepath.name}"
-        reject_url = f"{self.base_url}/reject?id={filepath.name}"
-        pending_url = self.base_url
+        # The approval server rejects unauthenticated requests when a secret is set,
+        # so the token must travel with every link we hand out.
+        token_param = f"&token={self.secret}" if self.secret else ""
+        approve_url = f"{self.base_url}/approve?id={filepath.name}{token_param}"
+        reject_url = f"{self.base_url}/reject?id={filepath.name}{token_param}"
+        pending_url = f"{self.base_url}/?token={self.secret}" if self.secret else self.base_url
         body = (
             f"A new approval request has been submitted:\n\n"
             f"  Action: {action_type}\n"
@@ -89,7 +102,7 @@ class PendingHandler(FileSystemEventHandler):
                 to=self.notify_email,
                 subject=f"[AI Employee] Approval Needed: {action_type}",
                 body=body,
-                html_body=html_body
+                html_body=html_body,
             )
             logger.info(f"Email notification sent to {self.notify_email}")
         except Exception as e:
@@ -128,7 +141,7 @@ class ApprovalHandler(FileSystemEventHandler):
         self._handle_file(filepath)
 
     def _handle_file(self, filepath: Path):
-        if filepath.suffix != '.json':
+        if filepath.suffix != ".json":
             return
         if filepath.name in self.processed:
             return
@@ -147,7 +160,9 @@ class ApprovalHandler(FileSystemEventHandler):
         if not data:
             return
 
-        logger.info(f"Action approved: {data.get('id', 'unknown')} ({data.get('action_type', '?')})")
+        logger.info(
+            f"Action approved: {data.get('id', 'unknown')} ({data.get('action_type', '?')})"
+        )
 
         if not self.mcp:
             logger.warning("No MCP Server available, cannot execute action")
@@ -162,12 +177,12 @@ class ApprovalHandler(FileSystemEventHandler):
             result = self.mcp.action_executor.execute(action)
             self.mcp._save_action(action)
 
-            if result.get('success'):
+            if result.get("success"):
                 logger.info(f"✅ Action executed: {action.id}")
             else:
                 logger.error(f"❌ Action failed: {action.id} - {result.get('error')}")
 
-            self._archive_file(filepath, "executed" if result.get('success') else "failed")
+            self._archive_file(filepath, "executed" if result.get("success") else "failed")
         except Exception as e:
             logger.error(f"Failed to execute action: {e}")
             self._archive_file(filepath, "failed")
@@ -176,7 +191,9 @@ class ApprovalHandler(FileSystemEventHandler):
         """Log a rejected action"""
         data = self._load_action(filepath)
         if data:
-            logger.info(f"Action rejected: {data.get('id', 'unknown')} ({data.get('action_type', '?')})")
+            logger.info(
+                f"Action rejected: {data.get('id', 'unknown')} ({data.get('action_type', '?')})"
+            )
         self._archive_file(filepath, "rejected")
 
     def _archive_file(self, filepath: Path, subfolder: str):
@@ -191,13 +208,20 @@ class ApprovalHandler(FileSystemEventHandler):
 class ApprovalWatcher:
     """Watches approval directories, notifies, and executes actions"""
 
-    def __init__(self, vault_path: str, mcp_server: Optional[MCPServer] = None,
-                 notify_email: Optional[str] = None, approval_port: int = 8080,
-                 approval_url: Optional[str] = None):
+    def __init__(
+        self,
+        vault_path: str,
+        mcp_server: Optional[MCPServer] = None,
+        notify_email: Optional[str] = None,
+        approval_port: int = 8080,
+        approval_url: Optional[str] = None,
+        approval_secret: str = "",
+    ):
         self.vault_path = Path(vault_path)
         self.notify_email = notify_email
         self.approval_port = approval_port
         self.approval_url = approval_url
+        self.approval_secret = approval_secret
         self.pending_dir = self.vault_path / "Pending_Approval"
         self.approved_dir = self.vault_path / "Approved"
         self.rejected_dir = self.vault_path / "Rejected"
@@ -229,6 +253,7 @@ class ApprovalWatcher:
         else:
             try:
                 import socket
+
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
                 ip = s.getsockname()[0]
@@ -238,14 +263,25 @@ class ApprovalWatcher:
             except Exception:
                 base_url = f"http://localhost:{self.approval_port}"
                 logger.warning("Could not detect local IP, falling back to localhost")
-        self.pending_handler = PendingHandler(self.pending_dir, gmail_sender, self.notify_email, base_url)
+        self.pending_handler = PendingHandler(
+            self.pending_dir, gmail_sender, self.notify_email, base_url, self.approval_secret
+        )
 
         self.observer = Observer()
         self.observer.schedule(self.handler, str(self.approved_dir), recursive=False)
         self.observer.schedule(self.handler, str(self.rejected_dir), recursive=False)
         self.observer.schedule(self.pending_handler, str(self.pending_dir), recursive=False)
         self.observer.start()
-        logger.info(f"ApprovalWatcher watching: {self.pending_dir}, {self.approved_dir}, {self.rejected_dir}")
+
+        # Process any files that arrived while offline
+        for f in sorted(self.approved_dir.glob("*.json")):
+            self.handler._handle_file(f)
+        for f in sorted(self.rejected_dir.glob("*.json")):
+            self.handler._handle_file(f)
+
+        logger.info(
+            f"ApprovalWatcher watching: {self.pending_dir}, {self.approved_dir}, {self.rejected_dir}"
+        )
         if self.notify_email:
             logger.info(f"Email notifications to: {self.notify_email}")
 

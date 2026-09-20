@@ -1,6 +1,7 @@
 """
 Approval HTTP Server - Lightweight server for clickable approve/reject links
 """
+
 import json
 import logging
 import threading
@@ -70,6 +71,7 @@ class ApprovalRequestHandler(BaseHTTPRequestHandler):
     def _list_pending(self):
         pending_dir = self.vault_path / "Pending_Approval"
         files = sorted(pending_dir.glob("*.json"))
+        token_param = f"&token={self.secret}" if self.secret else ""
         if not files:
             items = '<p class="empty">No pending approvals.</p>'
         else:
@@ -82,9 +84,11 @@ class ApprovalRequestHandler(BaseHTTPRequestHandler):
                     items += '<div class="pending">'
                     items += f'<strong>{atype}</strong> <span class="id">({aid})</span>'
                     items += '<div class="actions">'
-                    items += f'<a class="approve" href="/approve?id={f.name}">✅ Approve</a>'
-                    items += f'<a class="reject" href="/reject?id={f.name}">❌ Reject</a>'
-                    items += '</div></div>'
+                    items += f'<a class="approve" href="/approve?id={f.name}{token_param}">✅ Approve</a>'
+                    items += (
+                        f'<a class="reject" href="/reject?id={f.name}{token_param}">❌ Reject</a>'
+                    )
+                    items += "</div></div>"
                 except Exception:
                     items += f'<div class="pending">⚠ Could not read: {f.name}</div>'
         html = HTML_LIST.replace("{items}", items)
@@ -93,45 +97,105 @@ class ApprovalRequestHandler(BaseHTTPRequestHandler):
     def _handle_approve(self, params):
         filename = (params.get("id") or [None])[0]
         if not filename or ".." in filename or "/" in filename:
-            self._send_html(HTML_SUCCESS.format(icon="⚠️", title="Invalid Request",
-                          color="#eab308", message="No filename provided.",
-                          filename="", result="Error"), 400)
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="⚠️",
+                    title="Invalid Request",
+                    color="#eab308",
+                    message="No filename provided.",
+                    filename="",
+                    result="Error",
+                ),
+                400,
+            )
             return
         src = self.vault_path / "Pending_Approval" / filename
         dst = self.vault_path / "Approved" / filename
         if not src.exists():
-            self._send_html(HTML_SUCCESS.format(icon="⚠️", title="Not Found",
-                          color="#eab308", message="Approval request not found.",
-                          filename=filename, result="Error"), 404)
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="⚠️",
+                    title="Not Found",
+                    color="#eab308",
+                    message="Approval request not found.",
+                    filename=filename,
+                    result="Error",
+                ),
+                404,
+            )
             return
         src.rename(dst)
-        self._send_html(HTML_SUCCESS.format(icon="✅", title="Approved!",
-                      color="#22c55e", message="Action has been approved and queued for execution.",
-                      filename=filename, result="Approved"))
+        self._send_html(
+            HTML_SUCCESS.format(
+                icon="✅",
+                title="Approved!",
+                color="#22c55e",
+                message="Action has been approved and queued for execution.",
+                filename=filename,
+                result="Approved",
+            )
+        )
 
     def _handle_reject(self, params):
         filename = (params.get("id") or [None])[0]
         if not filename or ".." in filename or "/" in filename:
-            self._send_html(HTML_SUCCESS.format(icon="⚠️", title="Invalid Request",
-                          color="#eab308", message="No filename provided.",
-                          filename="", result="Error"), 400)
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="⚠️",
+                    title="Invalid Request",
+                    color="#eab308",
+                    message="No filename provided.",
+                    filename="",
+                    result="Error",
+                ),
+                400,
+            )
             return
         src = self.vault_path / "Pending_Approval" / filename
         dst = self.vault_path / "Rejected" / filename
         if not src.exists():
-            self._send_html(HTML_SUCCESS.format(icon="⚠️", title="Not Found",
-                          color="#eab308", message="Approval request not found.",
-                          filename=filename, result="Error"), 404)
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="⚠️",
+                    title="Not Found",
+                    color="#eab308",
+                    message="Approval request not found.",
+                    filename=filename,
+                    result="Error",
+                ),
+                404,
+            )
             return
         src.rename(dst)
-        self._send_html(HTML_SUCCESS.format(icon="❌", title="Rejected",
-                      color="#ef4444", message="Action has been rejected.",
-                      filename=filename, result="Rejected"))
+        self._send_html(
+            HTML_SUCCESS.format(
+                icon="❌",
+                title="Rejected",
+                color="#ef4444",
+                message="Action has been rejected.",
+                filename=filename,
+                result="Rejected",
+            )
+        )
 
     def do_GET(self):
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
         path = parsed.path.rstrip("/")
+
+        if self.secret and not self._verify_secret(params):
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="🔒",
+                    title="Unauthorized",
+                    color="#ef4444",
+                    message="Invalid or missing secret token.",
+                    filename="",
+                    result="Unauthorized",
+                ),
+                401,
+            )
+            return
 
         if path == "" or path == "/":
             return self._list_pending()
@@ -140,9 +204,17 @@ class ApprovalRequestHandler(BaseHTTPRequestHandler):
         elif path == "/reject":
             return self._handle_reject(params)
         else:
-            self._send_html(HTML_SUCCESS.format(icon="404", title="Not Found",
-                          color="#666", message="Page not found.",
-                          filename="", result="Error"), 404)
+            self._send_html(
+                HTML_SUCCESS.format(
+                    icon="404",
+                    title="Not Found",
+                    color="#666",
+                    message="Page not found.",
+                    filename="",
+                    result="Error",
+                ),
+                404,
+            )
 
 
 class ApprovalServer:
@@ -153,13 +225,28 @@ class ApprovalServer:
         self.server: HTTPServer | None = None
         self.thread: threading.Thread | None = None
 
+    def _handler_class(self):
+        """
+        Build a handler class bound to this server's vault and secret.
+
+        The base handler stores vault_path/secret as class attributes, so a second
+        server would otherwise overwrite the first one's configuration and serve
+        approval links from the wrong vault.
+        """
+
+        class _BoundHandler(ApprovalRequestHandler):
+            pass
+
+        _BoundHandler.vault_path = self.vault_path
+        _BoundHandler.secret = self.secret
+        return _BoundHandler
+
     def run(self):
-        ApprovalRequestHandler.vault_path = self.vault_path
-        ApprovalRequestHandler.secret = self.secret
-        self.server = HTTPServer(("0.0.0.0", self.port), ApprovalRequestHandler)
+        self.server = HTTPServer(("0.0.0.0", self.port), self._handler_class())
         logger.info(f"✅ Approval HTTP server running on http://localhost:{self.port}")
         try:
             import socket
+
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.connect(("8.8.8.8", 80))
             ip = s.getsockname()[0]
@@ -168,7 +255,12 @@ class ApprovalServer:
         except Exception:
             pass
         if self.secret:
-            logger.info(f"   🔑 Secret token: {self.secret}")
+            logger.info("   🔑 Token authentication: ENABLED")
+        else:
+            logger.warning(
+                "   ⚠  Token authentication DISABLED — anyone who can reach this port "
+                "can approve actions. Set APPROVAL_SECRET in .env."
+            )
         self.server.serve_forever()
 
     def start(self):

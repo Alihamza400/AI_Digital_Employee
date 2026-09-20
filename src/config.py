@@ -2,10 +2,10 @@
 Central configuration — loads from .env with pydantic-settings.
 Secrets are individual env vars, reconstructed into credential objects in memory.
 """
+
 from pathlib import Path
 from typing import Any, Dict
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 GOOGLE_AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
 GOOGLE_TOKEN_URI = "https://oauth2.googleapis.com/token"
@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     notify_email: str = ""
     approval_url: str = ""
     approval_port: int = 8080
+    approval_secret: str = ""
+    opencode_model: str = ""
+    opencode_agent: str = "ai-employee"
+    opencode_timeout: int = 300
     whatsapp_session: str = "AI_Employee_Vault/whatsapp_session"
     linkedin_session: str = "AI_Employee_Vault/linkedin_session"
 
@@ -119,7 +123,9 @@ class Settings(BaseSettings):
 
     @property
     def calendar_configured(self) -> bool:
-        return bool(self.calendar_client_id and self.calendar_client_secret and self.calendar_refresh_token)
+        return bool(
+            self.calendar_client_id and self.calendar_client_secret and self.calendar_refresh_token
+        )
 
     @property
     def whatsapp_session_path(self) -> Path:
@@ -131,16 +137,20 @@ class Settings(BaseSettings):
 
     def to_dict(self) -> dict:
         return {
-            'gmail_client_config': self.gmail_client_config_dict,
-            'gmail_token_json': self.gmail_token_dict,
-            'calendar_client_config': self.calendar_client_config_dict,
-            'calendar_token_json': self.calendar_token_dict,
-            'vault_path': self.vault_path,
-            'notify_email': self.notify_email,
-            'approval_url': self.approval_url,
-            'approval_port': self.approval_port,
-            'whatsapp_session': str(self.whatsapp_session_path),
-            'linkedin_session': str(self.linkedin_session_path),
+            "gmail_client_config": self.gmail_client_config_dict,
+            "gmail_token_json": self.gmail_token_dict,
+            "calendar_client_config": self.calendar_client_config_dict,
+            "calendar_token_json": self.calendar_token_dict,
+            "vault_path": self.vault_path,
+            "notify_email": self.notify_email,
+            "approval_url": self.approval_url,
+            "approval_port": self.approval_port,
+            "approval_secret": self.approval_secret,
+            "opencode_model": self.opencode_model,
+            "opencode_agent": self.opencode_agent,
+            "opencode_timeout": self.opencode_timeout,
+            "whatsapp_session": str(self.whatsapp_session_path),
+            "linkedin_session": str(self.linkedin_session_path),
         }
 
 

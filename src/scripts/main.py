@@ -1,6 +1,7 @@
 """
 Personal AI Employee - Your autonomous assistant
 """
+
 import sys
 import time
 import signal
@@ -15,13 +16,19 @@ from threading import Thread
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.watchers import (
-    FileSystemWatcher, GmailWatcher,
-    AIReasoningWatcher, ApprovalWatcher, start_approval_server,
-    MCPServer, ScheduledTaskManager
+    FileSystemWatcher,
+    GmailWatcher,
+    AIReasoningWatcher,
+    ApprovalWatcher,
+    start_approval_server,
+    MCPServer,
+    ScheduledTaskManager,
 )
 from src.config import Settings, settings
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 VAULT = settings.vault
@@ -41,24 +48,32 @@ def _detect_ip() -> str:
 
 def _start_tunnel(local_port: int) -> tuple[threading.Thread, str | None]:
     result_holder = []
+
     def _run():
         try:
             cmd = [
-                "ssh", "-o", "StrictHostKeyChecking=no",
-                "-o", "ServerAliveInterval=30",
-                "-R", f"80:localhost:{local_port}",
-                "nokey@localhost.run"
+                "ssh",
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "ServerAliveInterval=30",
+                "-R",
+                f"80:localhost:{local_port}",
+                "nokey@localhost.run",
             ]
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            )
             for line in proc.stdout:
                 line = line.strip()
                 logger.info(f"[tunnel] {line}")
-                m = re.search(r'(https://[a-z0-9-]+\.lhr\.life)', line)
+                m = re.search(r"(https://[a-z0-9-]+\.lhr\.life)", line)
                 if m and not result_holder:
                     result_holder.append(m.group(1))
             proc.wait()
         except Exception as e:
             logger.warning(f"Tunnel failed: {e}")
+
     t = threading.Thread(target=_run, daemon=True)
     t.start()
     time.sleep(10)
@@ -69,6 +84,7 @@ def _start_tunnel(local_port: int) -> tuple[threading.Thread, str | None]:
 def print_qr(url: str):
     try:
         import qrcode
+
         qr = qrcode.QRCode(border=1, box_size=2)
         qr.add_data(url)
         print("\n" + "─" * 40)
@@ -81,7 +97,7 @@ def print_qr(url: str):
 
 def print_status(s: Settings, tunnel_url: str | None = None):
     url = tunnel_url or s.approval_url or f"http://localhost:{s.approval_port}"
-    email = s.notify_email or 'not set'
+    email = s.notify_email or "not set"
     print("""
 ╔══════════════════════════════════════════════╗
 ║       Personal AI Employee — Running         ║
@@ -92,10 +108,13 @@ def print_status(s: Settings, tunnel_url: str | None = None):
     if tunnel_url:
         print(f"  🌐  Tunnel:   {tunnel_url}")
     print(f"  🌐  Approve:  {url}")
+    print(
+        f"  🔑  Auth:     {'token required' if s.approval_secret else 'DISABLED (set APPROVAL_SECRET)'}"
+    )
     print("  ⏹   Stop:     Ctrl+C")
     print()
 
-    if tunnel_url or 'localhost' not in url:
+    if tunnel_url or "localhost" not in url:
         print_qr(url)
 
 
@@ -131,7 +150,7 @@ class PersonalAIEmployee:
                 self.gmail_watcher = GmailWatcher(
                     str(self.vault_path),
                     self.settings.gmail_client_config_dict,
-                    self.settings.gmail_token_dict
+                    self.settings.gmail_token_dict,
                 )
                 t = Thread(target=self.gmail_watcher.run, daemon=True)
                 t.start()
@@ -139,10 +158,17 @@ class PersonalAIEmployee:
             except Exception as e:
                 logger.warning(f"Gmail: {e}")
         else:
-            logger.info("Gmail: not configured (set GMAIL_CLIENT_CONFIG and GMAIL_TOKEN_JSON in .env)")
+            logger.info(
+                "Gmail: not configured (set GMAIL_CLIENT_CONFIG and GMAIL_TOKEN_JSON in .env)"
+            )
 
         try:
-            self.ai_reasoning_watcher = AIReasoningWatcher(str(self.vault_path))
+            self.ai_reasoning_watcher = AIReasoningWatcher(
+                str(self.vault_path),
+                model=self.settings.opencode_model or None,
+                agent=self.settings.opencode_agent or None,
+                timeout=self.settings.opencode_timeout,
+            )
             t = Thread(target=self.ai_reasoning_watcher.run, daemon=True)
             t.start()
             self.threads.append(t)
@@ -151,7 +177,9 @@ class PersonalAIEmployee:
 
         try:
             approval_port = self.settings.approval_port
-            self.approval_server = start_approval_server(str(self.vault_path), approval_port)
+            self.approval_server = start_approval_server(
+                str(self.vault_path), approval_port, self.settings.approval_secret
+            )
             self.threads.append(self.approval_server.thread)
         except Exception as e:
             logger.warning(f"Approval server: {e}")
@@ -159,10 +187,12 @@ class PersonalAIEmployee:
 
         try:
             self.approval_watcher = ApprovalWatcher(
-                str(self.vault_path), self.mcp,
+                str(self.vault_path),
+                self.mcp,
                 self.settings.notify_email,
                 self.settings.approval_port,
-                self.settings.approval_url or None
+                self.settings.approval_url or None,
+                self.settings.approval_secret,
             )
             t = Thread(target=self.approval_watcher.run, daemon=True)
             t.start()
@@ -191,6 +221,10 @@ class PersonalAIEmployee:
         self.running = False
         if self.task_manager:
             self.task_manager.stop()
+        if self.filesystem_watcher:
+            self.filesystem_watcher.stop()
+        if self.ai_reasoning_watcher:
+            self.ai_reasoning_watcher.stop()
         for t in self.threads:
             t.join(timeout=3)
 
@@ -198,12 +232,16 @@ class PersonalAIEmployee:
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description='Personal AI Employee')
-    parser.add_argument('--email', help='Email for approval notifications')
-    parser.add_argument('--approval-url', help='Public URL for links (e.g. http://192.168.1.100:8080)')
-    parser.add_argument('--approval-port', type=int, default=8080)
-    parser.add_argument('--tunnel', action='store_true', help='Create public tunnel via localhost.run')
-    parser.add_argument('--test', action='store_true', help='Run tests')
+    parser = argparse.ArgumentParser(description="Personal AI Employee")
+    parser.add_argument("--email", help="Email for approval notifications")
+    parser.add_argument(
+        "--approval-url", help="Public URL for links (e.g. http://192.168.1.100:8080)"
+    )
+    parser.add_argument("--approval-port", type=int, default=8080)
+    parser.add_argument(
+        "--tunnel", action="store_true", help="Create public tunnel via localhost.run"
+    )
+    parser.add_argument("--test", action="store_true", help="Run tests")
     args = parser.parse_args()
 
     if args.test:
@@ -221,7 +259,7 @@ def main():
 
     tunnel_url = None
     if args.tunnel:
-        s.approval_url = ''
+        s.approval_url = ""
         print("\n🌐 Creating public tunnel via localhost.run...")
         _, tunnel_url = _start_tunnel(args.approval_port)
         if tunnel_url:
@@ -240,14 +278,17 @@ def main():
 def run_tests():
     import unittest
 
+    MCPServer(str(VAULT))._setup_directories()
+
     class TestAIEmployee(unittest.TestCase):
         def test_vault(self):
             self.assertTrue(VAULT.exists())
-            for folder in ['Inbox', 'Needs_Action', 'Done', 'Logs']:
+            for folder in ["Inbox", "Needs_Action", "Done", "Logs"]:
                 self.assertTrue((VAULT / folder).exists())
+
         def test_config(self):
             s = Settings()
-            self.assertTrue(hasattr(s, 'notify_email'))
+            self.assertTrue(hasattr(s, "notify_email"))
 
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromTestCase(TestAIEmployee)
@@ -260,5 +301,5 @@ def run_tests():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

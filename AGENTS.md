@@ -64,8 +64,14 @@ Invoked via: `opencode run @ai-employee Process Needs_Action/FILE_xxx.md`
 
 - WhatsApp/LinkedIn require `playwright install` and a valid browser session
 - Gmail needs `credentials.json` + `token.json` in vault (OAuth 2.0)
-- `ai_reasoning_watcher.py:39` has a bare-word `HAMZA` bug that causes a SyntaxError on import
 - `AIReasoningWatcher` calls `opencode run` as a subprocess — requires `opencode` in PATH
+- **`OPENCODE_MODEL` must be set to a funded/available model** (e.g. `google/gemini-3.6-flash`).
+  If it is empty, opencode uses its default model, which may be rate-limited or
+  unfunded: `opencode run` then retries until `OPENCODE_TIMEOUT` (default 300s) and
+  exits without producing a plan or approval request. Check availability with
+  `opencode models` and a smoke test: `opencode run --model <model> "Say PONG"`.
+- The `ai-employee` subagent is `mode: primary` so `opencode run --agent ai-employee`
+  works; `mode: subagent` makes the CLI silently fall back to the default `build` agent
 - Vault config stored in `AI_Employee_Vault/config.json` (email, approval URL, etc.)
 - Tunnel mode: `uv run python -m src.scripts.main --tunnel` creates public URL via localhost.run
 - Run all scripts from repo root so CWD-relative paths work

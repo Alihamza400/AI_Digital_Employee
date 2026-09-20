@@ -11,7 +11,9 @@ class BaseWatcher(ABC):
         self.needs_action = self.vault_path / "Needs_Action"
         self.check_interval = check_interval
         self.logger = logging.getLogger(self.__class__.__name__)
-        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
     @abstractmethod
     def check_for_updates(self) -> List:

@@ -4,12 +4,14 @@ Run once in headed mode, scan QR/enter credentials, then the session
 works for headless posting and monitoring.
 
 Usage:
-    python3 scripts/login_linkedin.py
+    uv run python -m src.scripts.login_linkedin
 """
+
 import sys
 import logging
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from src.watchers.playwright_manager import manager as pw_manager
 
@@ -19,8 +21,8 @@ logger = logging.getLogger("linkedin_login")
 SESSION_PATH = Path("AI_Employee_Vault/linkedin_session")
 SESSION_PATH.mkdir(parents=True, exist_ok=True)
 
+
 def main():
-    was_alive = False
     try:
         pw_manager.start()
         pw = pw_manager._playwright
@@ -39,10 +41,10 @@ def main():
             str(SESSION_PATH),
             headless=False,
             channel="chromium",
-            viewport={'width': 1280, 'height': 720}
+            viewport={"width": 1280, "height": 720},
         )
         page = browser.pages[0]
-        page.goto('https://www.linkedin.com')
+        page.goto("https://www.linkedin.com")
 
         print("  ⏳ Waiting for login (up to 5 minutes)...")
         print("     (The script auto-detects when you're logged in)")
@@ -63,10 +65,10 @@ def main():
             str(SESSION_PATH),
             headless=True,
             channel="chromium",
-            viewport={'width': 1280, 'height': 720}
+            viewport={"width": 1280, "height": 720},
         )
         page2 = browser2.pages[0]
-        page2.goto('https://www.linkedin.com')
+        page2.goto("https://www.linkedin.com")
         try:
             page2.wait_for_selector('[data-test-id="nav-home"]', timeout=15000)
             print("  ✅ Headless verification passed!")
@@ -80,6 +82,7 @@ def main():
         logger.error(f"Failed: {e}")
     finally:
         pw_manager.stop()
+
 
 if __name__ == "__main__":
     main()

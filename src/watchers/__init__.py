@@ -1,6 +1,7 @@
 """
 Watchers Package - All watchers and related components
 """
+
 from .base_watcher import BaseWatcher
 from .filesystem_watcher import FileSystemWatcher, DropFolderHandler
 from .gmail_watcher import GmailWatcher, GmailSender
@@ -10,18 +11,8 @@ from .ai_reasoning_watcher import AIReasoningWatcher, NeedsActionHandler
 from .approval_watcher import ApprovalWatcher, ApprovalHandler, PendingHandler
 from .approval_server import ApprovalServer, start_approval_server
 from .playwright_manager import PlaywrightManager, manager as playwright_manager
-from .mcp_server import (
-    MCPServer, 
-    ApprovalWorkflow, 
-    ActionType, 
-    ActionStatus, 
-    ActionRequest
-)
-from .scheduler import (
-    CronScheduler, 
-    ScheduledTaskManager, 
-    AutomatedTasks
-)
+from .mcp_server import MCPServer, ApprovalWorkflow, ActionType, ActionStatus, ActionRequest
+from .scheduler import CronScheduler, ScheduledTaskManager, AutomatedTasks
 
 __all__ = [
     # Base

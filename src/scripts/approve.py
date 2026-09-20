@@ -1,11 +1,18 @@
 """
 Approval CLI - List, approve, or reject pending requests
 """
+
 import sys
 import json
 from pathlib import Path
 
-VAULT = Path("AI_Employee_Vault")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+from src.config import settings
+
+# Honor VAULT_PATH so the CLI always operates on the same vault as the running
+# system instead of assuming the default directory.
+VAULT = Path(settings.vault_path)
 PENDING = VAULT / "Pending_Approval"
 APPROVED = VAULT / "Approved"
 REJECTED = VAULT / "Rejected"
@@ -26,10 +33,10 @@ def list_pending():
     for f in files:
         try:
             data = json.loads(f.read_text())
-            req_id = data.get('id', '?')[:8]
-            action_type = data.get('action_type', '?')
-            params = data.get('parameters', {})
-            summary = str(list(params.values())[0] if params else '')[:38]
+            req_id = data.get("id", "?")[:8]
+            action_type = data.get("action_type", "?")
+            params = data.get("parameters", {})
+            summary = str(list(params.values())[0] if params else "")[:38]
             print(f"{req_id:<8} {action_type:<22} {summary:<40} {f.name}")
         except Exception as e:
             print(f"{'ERROR':<8} {'?':<22} {str(e):<40} {f.name}")

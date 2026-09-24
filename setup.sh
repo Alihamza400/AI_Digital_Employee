@@ -134,7 +134,7 @@ fi
 # ─── 8. Playwright browsers ────────────────────────────────────────────────
 header "8/8  Checking Playwright browsers"
 
-if uv run python -c "from playwright.sync_api import sync_playwright; print('ok')" 2>/dev/null; then
+if uv run python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); browser = p.chromium.launch(headless=True); browser.close(); p.stop()" 2>/dev/null; then
     ok "Playwright browsers already installed"
 else
     echo ""

@@ -7,7 +7,7 @@ cp .env.example .env                     # then set OPENCODE_MODEL + APPROVAL_SE
 uv run python -m src.scripts.main        # full system
 uv run python -m src.scripts.approve     # approval CLI (list/approve/reject)
 uv run ai-employee                       # same entry point, via the console script
-uv run pytest                            # 67 tests
+uv run pytest                            # 68 tests
 ```
 
 Run everything from the repo root — all paths are CWD-relative.

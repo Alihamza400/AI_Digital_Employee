@@ -13,12 +13,8 @@ if not settings.calendar_client_config_dict:
     sys.exit(1)
 
 flow = InstalledAppFlow.from_client_config(settings.calendar_client_config_dict, CALENDAR_SCOPES)
-print("Open this URL in your browser and log in with Google Calendar access:\n")
-print(flow.authorization_url()[0])
-print("\nAfter authorizing, paste the full redirect URL here:")
-auth_url = input("URL: ").strip()
-flow.fetch_token(authorization_response=auth_url)
-creds = flow.credentials
+print("A browser window will open for Google Calendar authorization.\n")
+creds = flow.run_local_server(port=0, access_type="offline", prompt="consent")
 
 # Write directly into .env — parse, update, write back
 env_path = Path(".env")

@@ -17,12 +17,8 @@ if not settings.gmail_client_config_dict:
     sys.exit(1)
 
 flow = InstalledAppFlow.from_client_config(settings.gmail_client_config_dict, SCOPES)
-print("Open this URL in your browser and log in:\n")
-print(flow.authorization_url()[0])
-print("\nAfter authorizing, paste the full redirect URL here:")
-auth_url = input("URL: ").strip()
-flow.fetch_token(authorization_response=auth_url)
-creds = flow.credentials
+print("A browser window will open for Gmail authorization.\n")
+creds = flow.run_local_server(port=0, access_type="offline", prompt="consent")
 
 print("\n✅ New token generated. Add these to your .env file:\n")
 print(f"GMAIL_REFRESH_TOKEN={creds.refresh_token}")

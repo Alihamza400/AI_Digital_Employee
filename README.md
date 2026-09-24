@@ -229,7 +229,7 @@ AI_Employee_Vault/
 | **Scheduling** | APScheduler | Cron & interval jobs |
 | **Configuration** | pydantic-settings | Type-safe .env config |
 | **Containers** | Docker + Compose | Production deployment |
-| **Quality** | Ruff, Black, pytest | Lint, format, 67 tests |
+| **Quality** | Ruff, Black, pytest | Lint, format, 68 tests |
 
 ---
 
@@ -375,7 +375,7 @@ docker exec -it hackathon0 opencode providers login
 ## Testing
 
 ```bash
-uv run pytest                        # 67 tests
+uv run pytest                        # 68 tests
 uv run ruff check src/ tests/        # lint
 uv run black --check src/ tests/     # format
 ```

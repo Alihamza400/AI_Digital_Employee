@@ -5,6 +5,7 @@ Watchers Package - All watchers and related components
 from .base_watcher import BaseWatcher
 from .filesystem_watcher import FileSystemWatcher, DropFolderHandler
 from .gmail_watcher import GmailWatcher, GmailSender
+from .calendar_watcher import CalendarWatcher
 from .whatsapp_watcher import WhatsAppWatcher, WhatsAppSender
 from .linkedin_watcher import LinkedInWatcher, LinkedInPoster, LinkedInPostCreator
 from .ai_reasoning_watcher import AIReasoningWatcher, NeedsActionHandler
@@ -23,6 +24,8 @@ __all__ = [
     # Gmail
     "GmailWatcher",
     "GmailSender",
+    # Calendar
+    "CalendarWatcher",
     # WhatsApp
     "WhatsAppWatcher",
     "WhatsAppSender",

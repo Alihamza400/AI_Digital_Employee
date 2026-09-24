@@ -10,6 +10,7 @@ import socket
 import subprocess
 import threading
 import re
+from urllib.parse import quote
 from pathlib import Path
 from threading import Thread
 
@@ -19,6 +20,7 @@ from dotenv import load_dotenv
 from src.watchers import (
     FileSystemWatcher,
     GmailWatcher,
+    CalendarWatcher,
     AIReasoningWatcher,
     ApprovalWatcher,
     start_approval_server,
@@ -98,6 +100,9 @@ def print_qr(url: str):
 
 def print_status(s: Settings, tunnel_url: str | None = None):
     url = tunnel_url or s.approval_url or f"http://localhost:{s.approval_port}"
+    if s.approval_secret:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}token={quote(s.approval_secret, safe='')}"
     email = s.notify_email or "not set"
     print("""
 ╔══════════════════════════════════════════════╗
@@ -128,6 +133,7 @@ class PersonalAIEmployee:
         self.mcp = MCPServer(str(s.vault), s.to_dict())
         self.filesystem_watcher = None
         self.gmail_watcher = None
+        self.calendar_watcher = None
         self.ai_reasoning_watcher = None
         self.approval_watcher = None
         self.approval_server = None
@@ -170,6 +176,21 @@ class PersonalAIEmployee:
             logger.info(
                 "Gmail: not configured (set GMAIL_CLIENT_CONFIG and GMAIL_TOKEN_JSON in .env)"
             )
+
+        if self.settings.calendar_configured:
+            try:
+                self.calendar_watcher = CalendarWatcher(
+                    str(self.vault_path),
+                    self.settings.calendar_client_config_dict,
+                    self.settings.calendar_token_dict,
+                )
+                t = Thread(target=self.calendar_watcher.run, daemon=True)
+                t.start()
+                self.threads.append(t)
+            except Exception as e:
+                logger.warning(f"Calendar: {e}")
+        else:
+            logger.info("Calendar: not configured")
 
         try:
             self.ai_reasoning_watcher = AIReasoningWatcher(

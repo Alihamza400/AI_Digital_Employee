@@ -107,12 +107,16 @@ class CronScheduler:
         if task_id in self.tasks:
             self.remove_job(task_id)
 
-        task = ScheduledTask(task_id, name, func, trigger, args, kwargs)
+        normalized_kwargs = kwargs or {}
+        task = ScheduledTask(task_id, name, func, trigger, args, normalized_kwargs)
         self.tasks[task_id] = task
 
         try:
             job = self.scheduler.add_job(
-                self._job_wrapper, trigger, args=(task_id, func, args, kwargs), id=task_id
+                self._job_wrapper,
+                trigger,
+                args=(task_id, func, args, normalized_kwargs),
+                id=task_id,
             )
         except Exception:
             del self.tasks[task_id]

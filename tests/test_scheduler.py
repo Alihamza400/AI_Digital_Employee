@@ -20,6 +20,7 @@ def test_cron_scheduler_job_management(tmp_path):
     # Status
     status = scheduler.get_job_status()
     assert any(s["task_id"] == "job-1" for s in status)
+    assert scheduler.scheduler.get_job("job-1").args[-1] == {}
 
     # Remove
     scheduler.remove_job("job-1")
